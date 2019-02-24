@@ -43,7 +43,7 @@ There are four methods to manipulate the object `has`, `get`, `set`, `del` all s
 
 ## Initializing an object
 ```javascript
-var Aliases = require('../index');
+var Aliases = require('obj-aliases');
 
 // Testing data object
 var data = {
