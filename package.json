@@ -1,6 +1,6 @@
 {
   "name": "obj-aliases",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Using string keys with aliases to get object properties",
   "main": "index.js",
   "scripts": {
