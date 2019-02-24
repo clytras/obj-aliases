@@ -1,0 +1,19 @@
+{
+  "name": "obj-aliases",
+  "version": "1.0.0",
+  "description": "Using string keys with aliases to get object properties",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "object",
+    "keys",
+    "aliases"
+  ],
+  "author": "Christos Lytras",
+  "license": "MIT",
+  "devDependencies": {
+    "tape": "^4.9.2"
+  }
+}
