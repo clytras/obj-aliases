@@ -12,7 +12,7 @@
     "aliases"
   ],
   "author": "Christos Lytras",
-  "license": "MIT",
+  "license": "BSD-3-Clause",
   "devDependencies": {
     "tape": "^4.9.2"
   }
