@@ -1,8 +1,12 @@
 {
   "name": "obj-aliases",
   "version": "1.1.0",
-  "description": "Using string keys with aliases to get object properties",
+  "description": "Using string keys with aliases and pipe functions to get object properties",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/clytras/obj-aliases.git"
+  },
   "scripts": {
     "test": "node tests/index.js"
   },
@@ -14,6 +18,6 @@
   "author": "Christos Lytras",
   "license": "MIT License",
   "devDependencies": {
-    "tape": "^4.9.2"
+    "tape": "^5.2.2"
   }
 }
