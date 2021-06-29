@@ -50,7 +50,8 @@ var data = {
         },
         test: 'This is a {>types._string}',
         rootTest: 'Root test {testing.obj.bar}',
-        aliasTestParams: 'Alias test {aliases.root} and "{some.param}" and "{@some.param}"',
+        aliasTest: '>nested.formats.test.parent',
+        aliasTestParams: 'Alias test {aliases.root|tickquote} and "{some.param|upper}" and "{@some.param}"',
         aliasSiblingTest: 'Alias sibling test {aliases.nested.props.siblingAliasFoo}',
         aliasParentsTest: 'Alias parents test {aliases.nested.props.nested.parentsAlias}',
         nested: {
@@ -89,14 +90,21 @@ function printData() {
 test('expand string', function(t) {
     var dataAliases = new Aliases(data);
 
+    dataAliases.setCustomPipes({
+        tickquote(value) {
+            return `\`${value}\``;
+        }
+    });
+
     t.equal(dataAliases.expandString('expandString.test'), 'This is a String');
     t.equal(dataAliases.expandString('expandString.rootTest'), 'Root test Foo');
+    // t.equal(dataAliases.expandString('expandString.aliasTest'), 'This is a parent test Flt');
     t.equal(dataAliases.expandString('expandString.aliasTest'), 'This is a parent test Flt');
-    t.equal(dataAliases.expandString('expandString.aliasTestParams'), 'Alias test two and "Some Param!" and "Own some param!"', {
+    t.equal(dataAliases.expandString('expandString.aliasTestParams', {
         some: {
             param: 'Some Param!'
         }
-    });
+    }), 'Alias test `two` and "SOME PARAM!" and "Own some param!"');
     t.equal(dataAliases.expandString('expandString.aliasSiblingTest'), 'Alias sibling test Bar');
     t.equal(dataAliases.expandString('expandString.aliasParentsTest'), 'Alias parents test Foo');
 
