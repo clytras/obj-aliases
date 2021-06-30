@@ -130,21 +130,28 @@ const _dataAliases = function (data) {
 
     this.__applyFunctions = function (value, functions) {
         var fns = functions.split(',');
+        var result = value;
 
         for (var i = 0; i < fns.length; i++) {
             var fn = fns[i].toLowerCase().trim();
             switch (fn) {
-                case 'upper': return value.toUpperCase();
-                case 'lower': return value.toLowerCase();
+                case 'upper': {
+                    result = result.toUpperCase();
+                    break;
+                }
+                case 'lower': {
+                    result = result.toLowerCase();
+                    break;
+                }
                 default: {
                     if (fn in that._customPipes && typeof that._customPipes[fn] === 'function') {
-                        return that._customPipes[fn](value);
+                        result = that._customPipes[fn](result);
                     }
                 }
             }
         }
 
-        return value;
+        return result;
     }
 
     this.__resolve = function (props) {

@@ -1,6 +1,6 @@
 {
   "name": "obj-aliases",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Using string keys with aliases and pipe functions to get object properties",
   "main": "index.js",
   "repository": {

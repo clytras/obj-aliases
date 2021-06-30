@@ -71,6 +71,7 @@ var data = {
             message: 'The type is "{~#type}"',
             message2: 'The type is "{#type}"',
             message3: 'The type is "{#type|upper}"',
+            message4: 'The type is {#type|lower,tickquote}',
         }
     }
 };
@@ -132,6 +133,9 @@ test('expand string', function(t) {
     t.equal(dataAliases.expandString('expandString.lang.message3', {
         type: 'My Custom Test'
     }), 'The type is "MY CUSTOM TEST"');
+    t.equal(dataAliases.expandString('expandString.lang.message4', {
+        type: 'Lower with Ticks'
+    }), 'The type is `lower with ticks`');
     t.equal(dataAliases.expandString('expandString.aliasSiblingTest'), 'Alias sibling test Bar');
     t.equal(dataAliases.expandString('expandString.aliasParentsTest'), 'Alias parents test Foo');
 
