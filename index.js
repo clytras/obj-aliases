@@ -129,29 +129,31 @@ const _dataAliases = function (data) {
     }
 
     this.__applyFunctions = function (value, functions) {
-        var fns = functions.split(',');
-        var result = value;
-
-        for (var i = 0; i < fns.length; i++) {
-            var fn = fns[i].toLowerCase().trim();
-            switch (fn) {
-                case 'upper': {
-                    result = result.toUpperCase();
-                    break;
-                }
-                case 'lower': {
-                    result = result.toLowerCase();
-                    break;
-                }
-                default: {
-                    if (fn in that._customPipes && typeof that._customPipes[fn] === 'function') {
-                        result = that._customPipes[fn](result);
+        if (typeof functions === string && functions.length > 0) {
+            var fns = functions.split(',');
+            var result = value;
+    
+            for (var i = 0; i < fns.length; i++) {
+                var fn = fns[i].toLowerCase().trim();
+                switch (fn) {
+                    case 'upper': {
+                        result = result.toUpperCase();
+                        break;
+                    }
+                    case 'lower': {
+                        result = result.toLowerCase();
+                        break;
+                    }
+                    default: {
+                        if (fn in that._customPipes && typeof that._customPipes[fn] === 'function') {
+                            result = that._customPipes[fn](result);
+                        }
                     }
                 }
             }
+            return result;
         }
-
-        return result;
+        return value;
     }
 
     this.__resolve = function (props) {
