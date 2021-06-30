@@ -65,6 +65,12 @@ var data = {
                     parent: 'This is a parent test {~nested.thisParents._flt}'
                 }
             }
+        },
+        lang: {
+            arg1: 'Arg 1',
+            message: 'The type is "{~#type}"',
+            message2: 'The type is "{#type}"',
+            message3: 'The type is "{#type|upper}"',
         }
     }
 };
@@ -105,6 +111,27 @@ test('expand string', function(t) {
             param: 'Some Param!'
         }
     }), 'Alias test `two` and "SOME PARAM!" and "Own some param!"');
+    t.equal(dataAliases.expandString('expandString.lang.message', {
+        type: 'nested.thisParents._int'
+    }), 'The type is "Int"');
+    t.equal(dataAliases.expandString('expandString.lang.message2', {
+        type: '>arg1'
+    }), 'The type is "Arg 1"');
+    t.equal(dataAliases.expandString('expandString.lang.message2', {
+        type: '~nested.obj.arr.0'
+    }), 'The type is "one"');
+    t.equal(dataAliases.expandString('expandString.lang.message2', {
+        type: '~nested.thisParents._str'
+    }), 'The type is "Str"');
+    t.equal(dataAliases.expandString('expandString.lang.message3', {
+        type: 'expandString.types._float'
+    }), 'The type is "FLOAT"');
+    t.equal(dataAliases.expandString('expandString.lang.message2', {
+        type: 'My Custom Test'
+    }), 'The type is "My Custom Test"');
+    t.equal(dataAliases.expandString('expandString.lang.message3', {
+        type: 'My Custom Test'
+    }), 'The type is "MY CUSTOM TEST"');
     t.equal(dataAliases.expandString('expandString.aliasSiblingTest'), 'Alias sibling test Bar');
     t.equal(dataAliases.expandString('expandString.aliasParentsTest'), 'Alias parents test Foo');
 
