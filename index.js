@@ -129,7 +129,7 @@ const _dataAliases = function (data) {
     }
 
     this.__applyFunctions = function (value, functions) {
-        if (typeof functions === string && functions.length > 0) {
+        if (typeof functions === 'string' && functions.length > 0) {
             var fns = functions.split(',');
             var result = value;
     
