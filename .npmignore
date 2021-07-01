@@ -1,0 +1,6 @@
+tests/
+node_modules/
+.vscode/
+index.js
+README.md
+.gitattributes

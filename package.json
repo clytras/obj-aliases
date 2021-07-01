@@ -1,14 +1,18 @@
 {
   "name": "obj-aliases",
-  "version": "1.2.4",
+  "version": "1.3.0",
   "description": "Using string keys with aliases and pipe functions to get object properties",
-  "main": "index.js",
+  "main": "min.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/clytras/obj-aliases.git"
   },
   "scripts": {
-    "test": "node tests/index.js"
+    "test": "node tests/index.js",
+    "test:min": "node tests/min.js",
+    "build": "terser --compress --mangle -- index.js > min.js",
+    "pub": "npm run test && npm run build && npm run test:min && npm publish",
+    "pub:dry": "npm run test && npm run build && npm run test:min && npm publish --dry-run"
   },
   "keywords": [
     "object",
@@ -18,9 +22,8 @@
   "author": "Christos Lytras",
   "license": "MIT License",
   "devDependencies": {
-    "tape": "^5.2.2"
+    "tape": "^5.2.2",
+    "terser": "^5.7.1"
   },
-  "dependencies": {
-    "ijavascript": "^5.2.0"
-  }
+  "dependencies": {}
 }
