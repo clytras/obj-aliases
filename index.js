@@ -35,8 +35,8 @@ const _dataAliases = function (data) {
         return that.get(key, '', { expandString: true, expandStringParams: params });
     }
 
-    this.set = function (key, value, props) {
-        var useAliases = props instanceof Object && 'useAliases' in props ? props.useAliases : true;
+    this.set = function (key, value, params) {
+        var useAliases = params instanceof Object && 'useAliases' in params ? params.useAliases : true;
         var resolve = that.__resolve({ key: key, setNewValue: true, newValue: value, followAliasLinks: useAliases });
         if (resolve.found) {
             return true;
@@ -46,6 +46,43 @@ const _dataAliases = function (data) {
 
     this.$set = function (key, value) {
         return that.set(key, value, { useAliases: false });
+    }
+
+    this.__makeKey = function() {
+        var parts = [];
+        var i;
+        for (i = 0; i < arguments.length; i++) {
+            var arg = arguments[i];
+            if (arg || arg === 0) {
+                parts.push(arg);
+            }
+        }
+        return parts.join('.');
+    }
+
+    this.merge = function (data, key, params) {
+        var prop;
+
+        if (!(data instanceof Object) && !key) {
+            throw new Error('Cant set primitive value to data root');
+        }
+
+        for (prop in data) {
+            var value = data[prop];
+
+            if (value instanceof Object) {
+                if (value instanceof Array) {
+                    var i;
+                    for (i = 0; i < value.length; i++) {
+                        that.$set(that.__makeKey(key, prop, '[]'), value[i]);
+                    }
+                } else {
+                    that.merge(value, that.__makeKey(key, prop), params);
+                }
+            } else {
+                that.$set(that.__makeKey(key, prop), value);
+            }
+        }
     }
 
     this.del = function (key, props) {
@@ -95,6 +132,18 @@ const _dataAliases = function (data) {
         that._customPipes = pipes;
     }
 
+    this.__isAliasWithArgs = function (value) {
+        if (
+            value instanceof Array &&
+            value.length === 2 &&
+            typeof value[0] === 'string'
+        ) {
+            var isAlias = this.__isAlias(value[0]);
+            return isAlias.result;
+        }
+        return false;
+    }
+
     this.__isAlias = function (key) {
         var re = new RegExp('^([' +
             that._linkMarks.root +
@@ -108,7 +157,7 @@ const _dataAliases = function (data) {
             type: result ? result[1] : null,
             key: result ? result[2] : null,
             parts: result ? result[2].split(that._keysSplit) : [],
-        }
+        };
     }
 
     this.__parseKey = function (key) {
@@ -167,26 +216,22 @@ const _dataAliases = function (data) {
             expandString = 'expandString' in props ? props.expandString : false,
             expandStringParams = '_expandStringParams' in props
                 ? props._expandStringParams
-                : new _dataAliases('expandStringParams' in props ? props.expandStringParams : {});
+                : new _dataAliases(props.expandStringParams || {});
 
         var parsed = this.__parseKey(thekey);
         var key;
 
         if (parsed.isParamKey && expandStringParams.has(parsed.key)) {
             key = parsed.type + expandStringParams.get(parsed.key);
-            // console.log('key:from params', key, expandStringParams.get(parsed.key));
         } else {
             key = parsed.fullKey
         }
-
-        // console.log('key', key, parsed, expandStringParams.has(parsed.key), expandStringParams._data);
 
         var kparts = parsed.key.split(that._keysSplit),
             datacur = dataroot ? dataroot : this._data,
             notFound = false,
             prevpart = '',
-            parentptrs = [datacur],
-            datarootpass;
+            parentptrs = [datacur];
 
         if ('currentPath' in props) {
             var cparts = props.currentPath.split(that._keysSplit);
@@ -203,29 +248,40 @@ const _dataAliases = function (data) {
         }
 
         if (!expandString || !(expandString && expandStringParams.has(key))) {
-            for (var kpart in kparts) {
+            for (var kpart = 0; kpart < kparts.length; kpart++) {
                 var curkey = kparts[kpart],
-                    isLast = kpart == kparts.length - 1;
+                    isLast = kpart === kparts.length - 1;
+                var nextpart = !isLast ? kparts[kpart + 1] : null;
 
-                if (curkey[0] == '-' && /^-?\d+$/.test(curkey)) {
+                if (curkey[0] === '-' && /^-?\d+$/.test(curkey)) {
                     curkey = datacur.length + parseInt(curkey);
                 }
 
                 if (datacur instanceof Object && curkey in datacur) {
-                    if (followAliasLinks && typeof(datacur[curkey]) === "string") {
-                        var isAlias = this.__isAlias(datacur[curkey]);
+                    if (
+                        followAliasLinks &&
+                        (
+                            typeof datacur[curkey] === 'string' ||
+                            datacur[curkey] instanceof Array
+                        )
+                    ) {
+                        let currentValue = datacur[curkey];
+                        if (this.__isAliasWithArgs(datacur[curkey])) {
+                            currentValue = datacur[curkey][0];
+                            expandStringParams.merge(datacur[curkey][1]);
+                        }
+
+                        var isAlias = this.__isAlias(currentValue);
 
                         if (!isAlias.result) {
                             datacur = datacur[curkey];
                         } else {
-                            datarootpass = null;
-
                             switch (isAlias.type) {
                                 case that._linkMarks.parents: {
                                     var aliasFound = false,
                                         aliasResolve = null;
 
-                                    for (var i = parentptrs.length - 2; i >= 0; i--) {
+                                    for (var i = parentptrs.length - 2; i >= -1; i--) {
                                         aliasResolve = that.__resolve({
                                             key: isAlias.key,
                                             dataroot: parentptrs[i],
@@ -235,12 +291,14 @@ const _dataAliases = function (data) {
                                             mustMatchFirstKey: true,
                                             _expandStringParams: expandStringParams,
                                         });
+
                                         if (aliasResolve.found) {
                                             aliasFound = true;
                                             newValueSet = true;
                                             break;
                                         }
                                     }
+
                                     if (aliasFound) {
                                         parentptrs = parentptrs.slice(0, i - 1);
                                         datacur = aliasResolve.value;
@@ -249,24 +307,37 @@ const _dataAliases = function (data) {
                                     }
                                     break;
                                 }
-                                case that._linkMarks.siblings: {
-                                    datarootpass = datacur;
-                                }
+                                case that._linkMarks.siblings:
                                 case that._linkMarks.root: {
+                                    var useKey;
+
+                                    if (isAlias.type === that._linkMarks.siblings) {
+                                        var pathProps = key.split(that._keysSplit);
+                                        if (pathProps.length >= 2) {
+                                            pathProps.splice(pathProps.length - 1, 1, isAlias.key);
+                                            useKey = pathProps.join(that._keysSplit);
+                                        } else {
+                                            useKey = isAlias.key;
+                                        }
+                                    } else {
+                                        useKey = isAlias.key;
+                                    }
+
                                     var resolve = that.__resolve({
-                                        key: isAlias.key, 
-                                        dataroot: datarootpass, 
+                                        key: useKey, 
                                         setNewValue: setNewValue, 
                                         newValue: newValue,
                                         deleteIt: deleteIt,
                                         _expandStringParams: expandStringParams,
                                     });
+
                                     if (resolve.found) {
                                         datacur = resolve.value;
                                         newValueSet = true;
                                     } else {
                                         notFound = true;
                                     }
+
                                     break;
                                 }
                             }
@@ -292,7 +363,8 @@ const _dataAliases = function (data) {
                         }
                     }
                 } else if (setNewValue && (!mustMatchFirstKey || mustMatchFirstKey && kpart > 0)) {
-                    if (curkey == "[]") {
+                    if (curkey === '[]') {
+                        
                         if (!(datacur instanceof Array)) {
                             datacur = [];
                         }
@@ -313,7 +385,11 @@ const _dataAliases = function (data) {
                             if (isLast) {
                                 datacur[curkey] = newValue;
                             } else if (datacur instanceof Object) {
-                                datacur[curkey] = {};
+                                if (nextpart === '[]') {
+                                    datacur[curkey] = [];
+                                } else {
+                                    datacur[curkey] = {};
+                                }
                             } else {
                                 if (!(datacur instanceof Object)) {
                                     parentptrs[parentptrs.length - 2][prevpart] = {};
@@ -365,8 +441,6 @@ const _dataAliases = function (data) {
                         isAlias = that.__isAlias(aliasKeyPath);
                     }
 
-                    // console.log('isAlias', { isAlias, aliasKeyPath, useKey }, pars, expandStringParams._data, expandStringParams.has(pars.key), expandStringParams.$has(pars.key));
-
                     if (!isAlias.result) {
                         if (expandStringParams.has(useKey)) {
                             return withFunctions(expandStringParams.get(useKey));
@@ -387,7 +461,7 @@ const _dataAliases = function (data) {
                             case that._linkMarks.parents: {
                                 var aliasResolve = null;
 
-                                for (var i = parentptrs.length - 2; i >= 0; i--) {
+                                for (var i = parentptrs.length - 2; i >= -1; i--) {
                                     aliasResolve = that.__resolve({
                                         key: useKey,
                                         dataroot: parentptrs[i],
@@ -401,13 +475,25 @@ const _dataAliases = function (data) {
                                 }
                                 break;
                             }
-                            case that._linkMarks.siblings: {
-                                datarootpass = parentptrs[parentptrs.length - 2];
-                            }
+                            case that._linkMarks.siblings:
                             case that._linkMarks.root: {
+                                var useLinkKey;
+
+                                if (isAlias.type === that._linkMarks.siblings) {
+                                    var pathProps = key.split(that._keysSplit);
+
+                                    if (pathProps.length >= 2) {
+                                        pathProps.splice(pathProps.length - 1, 1, isAlias.key);
+                                        useLinkKey = pathProps.join(that._keysSplit);
+                                    } else {
+                                        useLinkKey = useKey;
+                                    }
+                                } else {
+                                    useLinkKey = useKey;
+                                }
+
                                 var aliasResolve = that.__resolve({
-                                    key: useKey, 
-                                    dataroot: datarootpass, 
+                                    key: useLinkKey, 
                                     _expandStringParams: expandStringParams,
                                 });
 

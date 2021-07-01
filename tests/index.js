@@ -40,7 +40,9 @@ var data = {
         }
     },
     some: {
-        param: 'Own some param!'
+        param: 'Own some param!',
+        param2: 'Own some param 2!',
+        param3: 'Own some param 3!',
     },
     expandString: {
         types: {
@@ -72,8 +74,17 @@ var data = {
             message2: 'The type is "{#type}"',
             message3: 'The type is "{#type|upper}"',
             message4: 'The type is {#type|lower,tickquote}',
-        }
-    }
+        },
+    },
+    aliasLinksWithParams: {
+        first: ['~expandString.lang.message4', { type: '~expandString.nested.thisParents._str' }],
+        second: '~expandString.nested.thisParents._str',
+        linkToFirst: '>first',
+        linkToSecond: '>second',
+    },
+    rootAlias1: '>some.param',
+    rootAlias2: '@some.param2',
+    rootAlias3: '~some.param3',
 };
 
 function printData() {
@@ -105,7 +116,6 @@ test('expand string', function(t) {
 
     t.equal(dataAliases.expandString('expandString.test'), 'This is a String');
     t.equal(dataAliases.expandString('expandString.rootTest'), 'Root test Foo');
-    // t.equal(dataAliases.expandString('expandString.aliasTest'), 'This is a parent test Flt');
     t.equal(dataAliases.expandString('expandString.aliasTest'), 'This is a parent test Flt');
     t.equal(dataAliases.expandString('expandString.aliasTestParams', {
         some: {
@@ -138,6 +148,16 @@ test('expand string', function(t) {
     }), 'The type is `lower with ticks`');
     t.equal(dataAliases.expandString('expandString.aliasSiblingTest'), 'Alias sibling test Bar');
     t.equal(dataAliases.expandString('expandString.aliasParentsTest'), 'Alias parents test Foo');
+
+    
+    t.equal(dataAliases.expandString('rootAlias1'), 'Own some param!');
+    t.equal(dataAliases.expandString('rootAlias2'), 'Own some param 2!');
+    t.equal(dataAliases.expandString('rootAlias3'), 'Own some param 3!');
+
+    t.equal(dataAliases.expandString('aliasLinksWithParams.first'), 'The type is `str`');
+    t.equal(dataAliases.expandString('aliasLinksWithParams.linkToFirst'), 'The type is `str`');
+
+    t.equal(dataAliases.expandString('aliasLinksWithParams.linkToSecond'), 'Str');
 
     t.end();
 });
@@ -288,6 +308,52 @@ test('$get/$set/$del props', function (t) {
     t.assert(!dataAliases.has('aliases.root'));
     t.assert(!dataAliases.exists('aliases.root'));
     t.assert(!('root' in data.aliases));
+
+    t.end();
+});
+
+test('merge', function (t) {
+    var dataAliases = new Aliases(data);
+
+    const util = require('util');
+
+    dataAliases.merge({
+        nested: {
+            obj: {
+                arr: ['some', 1, { arrExt: 'Array extend' }],
+                newVal: 'New obj value',
+                newNum: 123,
+            },
+            newArr: [1, 3, 5],
+        },
+        testing: {
+            obj: {
+                foo: 'Bar'
+            },
+        },
+        newRootProp: {
+            newOne: 1,
+            newStr: 'String!',
+            newObj: { oneObj: 'One object' },
+            newArr: [1, 'two', 3, 'four'],
+        },
+    });
+
+    // printData();
+
+    t.equal(dataAliases.get('nested.obj.arr.-1.arrExt'), 'Array extend');
+    t.equal(dataAliases.get('nested.obj.arr.-2'), 1);
+    t.equal(dataAliases.get('nested.obj.arr.-3'), 'some');
+    t.deepEqual(dataAliases.get('nested.newArr'), [1, 3, 5]);
+    t.equal(dataAliases.get('testing.obj.foo'), 'Bar');
+    t.equal(dataAliases.get('newRootProp.newOne'), 1);
+    t.equal(dataAliases.get('newRootProp.newStr'), 'String!');
+    t.equal(dataAliases.get('newRootProp.newObj.oneObj'), 'One object');
+
+    t.equal(dataAliases.get('newRootProp.newArr.0'), 1);
+    t.equal(dataAliases.get('newRootProp.newArr.1'), 'two');
+    t.equal(dataAliases.get('newRootProp.newArr.2'), 3);
+    t.equal(dataAliases.get('newRootProp.newArr.3'), 'four');
 
     t.end();
 });
