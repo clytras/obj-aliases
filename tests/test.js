@@ -85,6 +85,13 @@ var data = {
     rootAlias1: '>some.param',
     rootAlias2: '@some.param2',
     rootAlias3: '~some.param3',
+    idx: {
+        msg1: 'This is type of {0} !!',
+        msg2: 'This is type of {0|upper} !!',
+        msg3: 'This is type of {#0} !!',
+        msg4: 'This is type of {#test} !!',
+        args: [ 'Aa', 'Bb' ],
+    },
 };
 
 function printData() {
@@ -149,7 +156,6 @@ test('expand string', function(t) {
     t.equal(dataAliases.expandString('expandString.aliasSiblingTest'), 'Alias sibling test Bar');
     t.equal(dataAliases.expandString('expandString.aliasParentsTest'), 'Alias parents test Foo');
 
-    
     t.equal(dataAliases.expandString('rootAlias1'), 'Own some param!');
     t.equal(dataAliases.expandString('rootAlias2'), 'Own some param 2!');
     t.equal(dataAliases.expandString('rootAlias3'), 'Own some param 3!');
@@ -158,6 +164,12 @@ test('expand string', function(t) {
     t.equal(dataAliases.expandString('aliasLinksWithParams.linkToFirst'), 'The type is `str`');
 
     t.equal(dataAliases.expandString('aliasLinksWithParams.linkToSecond'), 'Str');
+
+    t.equal(dataAliases.expandString('idx.msg1', ['Testing']), 'This is type of Testing !!');
+    t.equal(dataAliases.expandString('idx.msg2', ['Testing|lower']), 'This is type of TESTING|LOWER !!');
+    t.equal(dataAliases.expandString('idx.msg3', ['Testing']), 'This is type of Testing !!');
+    t.equal(dataAliases.expandString('idx.msg3', ['>args.0|lower']), 'This is type of aa !!');
+    t.equal(dataAliases.expandString('idx.msg4', { test: 'Testing' }), 'This is type of Testing !!');
 
     t.end();
 });

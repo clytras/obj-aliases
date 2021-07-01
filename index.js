@@ -168,13 +168,17 @@ const _dataAliases = function (data) {
         ']?)(' + that._paramsKeyIndicator + '?)([A-z0-9\-.]+)[|]?(.*)');
         var result = re.exec(key);
 
-        return {
-            type: result[1],
-            key: result[3],
-            fullKey: result[1] + result[3],
-            isParamKey: result[2] === that._paramsKeyIndicator,
-            functions: result[4],
-        };
+        if (result && result.length) {
+            return {
+                type: result[1],
+                key: result[3],
+                fullKey: result[1] + result[3],
+                isParamKey: result[2] === that._paramsKeyIndicator,
+                functions: result[4],
+            };
+        }
+
+        return { key: key };
     }
 
     this.__applyFunctions = function (value, functions) {
