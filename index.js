@@ -298,7 +298,7 @@ const _dataAliases = function (data) {
 
                                         if (aliasResolve.found) {
                                             aliasFound = true;
-                                            newValueSet = true;
+                                            // newValueSet = true;
                                             break;
                                         }
                                     }
@@ -337,7 +337,7 @@ const _dataAliases = function (data) {
 
                                     if (resolve.found) {
                                         datacur = resolve.value;
-                                        newValueSet = true;
+                                        // newValueSet = true;
                                     } else {
                                         notFound = true;
                                     }
